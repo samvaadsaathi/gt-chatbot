@@ -1,0 +1,53 @@
+# =====================================================================
+# Render Blueprint Specification for Gram Tarang Employability & AI Portal
+# Docs: https://render.com/docs/blueprint-spec
+# =====================================================================
+
+services:
+  # -------------------------------------------------------------------
+  # 1. High-Performance FastAPI + FAISS RAG AI Backend
+  # -------------------------------------------------------------------
+  - type: web
+    name: gt-chatbot-backend
+    runtime: python
+    region: singapore
+    plan: free
+    rootDir: backend
+    buildCommand: pip install --upgrade pip && pip install torch --index-url https://download.pytorch.org/whl/cpu && pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false # Set securely in Render Dashboard (Environment tab)
+
+  # -------------------------------------------------------------------
+  # 2. Modern React PWA Frontend (Static Web Service)
+  # -------------------------------------------------------------------
+  - type: web
+    name: gt-chatbot-frontend
+    runtime: static
+    region: singapore
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://gt-chatbot-backend.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /sw.js
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
+      - path: /manifest.webmanifest
+        name: Content-Type
+        value: application/manifest+json; charset=utf-8

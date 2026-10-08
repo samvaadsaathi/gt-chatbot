@@ -31,8 +31,6 @@ services:
   - type: web
     name: gt-chatbot-frontend
     runtime: static
-    region: singapore
-    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
